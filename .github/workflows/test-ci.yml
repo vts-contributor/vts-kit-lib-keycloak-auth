@@ -1,0 +1,47 @@
+name: Unit Test & Coverage
+
+on: [pull_request, push]
+ 
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    outputs:
+      isMain: ${{ steps.main.outputs.valid }}
+    env:
+      isMain: ${{ github.ref_name == secrets.MAIN_BRANCH || github.event_name == 'pull_request' }}
+    steps:
+      - name: Check
+        id: main
+        run: echo '::set-output name=valid::${{ env.isMain }}'
+  Process:
+    needs: [Check]
+    if: needs.Check.outputs.isMain == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Run test
+      id: unitTest
+      run: mvn test
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: target/surefire-reports/*.xml
+    - name: Upload event file
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: event-file
+        path: ${{ github.event_path }}
+    - name: Code Coverage
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: jacoco.xml
+        directory: ./target/site/jacoco/
