@@ -1,2 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.viettel.vtskit.keycloak.configuration.KeycloakAutoConfiguration
+com.viettel.vtskit.keycloak.configuration.KeycloakAutoConfiguration,\
+com.viettel.vtskit.keycloak.configuration.KeycloakWebSecurityConfig,\
+  com.viettel.vtskit.keycloak.configuration.KeycloakProperties
