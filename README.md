@@ -2,21 +2,19 @@ Keycloak Auth Library for Spring Boot
 -------
 This library provides utilities that make it easy to integrate Keycloak into spring boot project
 
-Feature List:
-* [Secure REST API](#securing-rest-api-using-keycloak)
-  * [Authenticate](#authenticate)
-  * [Authorize](#authorize)
-  * [Logout Current User](#Logout-current-user)
-  * [Get Current User](#Get-current-user)
-* [Admin Operation](#admin-operation )
-  * [Login](#Login)
-  * [Logout Specific User](#Logout-specific-user)
-  * [Logout Specific Session](#Logout-specific-session)
-  * [Get User Information](#Get-user-information)
-  * [Refresh Token](#Refresh-token)
-  * [Create User](#Create-User)
-  * [Update User](#Update-User)
-  * [Delete User](#Delete-User)
+<b>Feature List</b>
+* Secure REST API
+  * [Authentication](#authentication)
+  * [Authorization](#authorization)
+* Admin Operation
+  * [Create New User](#create-new-user)
+  * [Update User](#update-user)
+  * [Delete User](#delete-user)
+  * [Grant User Token](#grant-user-token)
+  * [Get User By Token](#get-user-by-token)
+  * [Logout Token](#logout-token)
+  * [Logout All Session By User](#logout-all-session-by-user)
+  * [Realm Resource Management](#realm-resource-management)
 
 Quick start
 -------
@@ -36,154 +34,159 @@ vtskit:
     realm: keycloak-demo # realm name
     auth-server-url: http://localhost:8080 #url connect to server keycloak
     resource: client-keycloak  #client id
-    bearer-only: true # only authenticate bearer token, not attempt login 
-    client-key-password: fI4B6eDBtwEi0NJsJMmYNSiIgj3jVp28 # password of client
+    client-key-password: fI4B6eDBtwEi0NJsJMmYNSiIgj3jVp28 # client secret
 ```
+
+* Declare `KeycloakService` to use some features if needed
+```java
+private KeycloakService keycloakService;
+
+@Autowired
+public void setKeycloakService(KeycloakService keycloakService) {
+    this.keycloakService = keycloakService;
+}
+```
+
 
 Usage
 -------
-##### Securing REST API using Keycloak
-###### Authenticate
-  By default, all API will be authenticated. To ignore authenticate in you api, you must add to `application-*.yml`:
-  ```yaml
-        vtskit:
-          keycloak:
-            ignore: ['/auth/**', '/create'] #list of ignored url
-  ```
-###### Authorize
+### Securing REST API
+#### Authentication
+
+By default, all API will be authenticated. To ignore by path pattern, configuration list of `ignore` in your `application-*.yml`:
+```yaml
+vtskit:
+  keycloak:
+    ignore: ['/auth/**', '/create'] #list of ignored url
+```
+
+Get Current Authentication Information
+
+```java
+Authentication authentication = keycloakService.getCurrentAuthentication();
+```
+
+#### Authorization
 To authorize your API: 
-* Option 1: Define in your `application.yml` security constraint:
+* <b>Option 1</b>: Define in your `application-*.yml` security constraint:
   ```yaml
-      vtskit:
-        keycloak:
-          securityConstraints:
-            - authRoles: [user] # list role will be accepted
-              securityCollections:
-                - name: API
-                  patterns: ['/test/*'] #list pattern url user have role in authRoles will be accessed
+  vtskit:
+    keycloak:
+      securityConstraints:
+        - authRoles: [user] # list role will be accepted
+          securityCollections:
+            - name: API
+              patterns: ['/test/*'] #list pattern url user have role in authRoles will be accessed
   ```
-* Option 2: You can use annotation: 
-  ```java
-      @RestController
-      @RequestMapping("/")
-      public class TestController {
-          @GetMapping(path = "test")
-          @RolesAllowed({"user"})
-          public ResponseEntity test(){
-                  return ResponseEntity.ok("test");
-          }
-      }
-  ```
-###### Logout Current User
-  ```java
-    keycloakService.logout()
-  ```
-###### Get Current User
-  ```java
-    keycloakService.getCurrentUser()
-  ```
-##### Admin Operation 
-* Step 1: To use, you must add some information about account admin keycloak:
-    ```yaml
-    vtskit:
-      keycloak:
-        admin-realm: master # optional (default: master)
-        admin-clientId: admin-cli #optional (default: admin-cli)
-        admin-username: admin
-        admin-password: admin
-    ```
-* Step 2: You need inject to you class KeycloakService:
-  ```java
-    @RestController
-    @RequestMapping("/")
-    public class TestController {
-        @Autowired
-        KeycloakService keycloakService;
+* <b>Option 2</b>: You can use annotation: 
+    ```java
+    @GetMapping(path = "test")
+    @RolesAllowed({"user"})
+    public ResponseEntity test(){
+      return ResponseEntity.ok("test");
     }
-  ```
-* Step 3: Use our built-in function:
-  ###### Login
-  ```java
-  Authorization test = keycloakService.authenticate(String username, String password)
-  ```
-  ###### Logout Specific User
-    ```java
-    Boolean test =  keycloakService.logout(String UserId)
     ```
-  ###### Logout Specific Session
-    ```java
-    Boolean test =  keycloakService.logoutToken(String token)
-    ```
-  ###### Get User Information
-    ```java
-    UserRepresentation test =  keycloakService.getUserInfo(String token)
-    ```
-  ###### Refresh Token
-    ```java
-    AccessTokenResponse test = keycloakService.refreshToken(String refreshToken)
-    ```
-  ###### Create User
-    ```java
-    Response test = keycloakService.createUser(UserRepresentation userRepresentation)
-    ```
-  ###### Update User
-    ```java
-    Boolean  test = keycloakService.updateUser(UserRepresentation userRepresentation)
-    ```
-  ###### Delete User
-    ```java
-    Boolean  test = keycloakService.deleteUser()
-    ```
-##### More instructions
+
+### Admin Operation 
+Add the following properties to your `application-*.yml` file.
+```yaml
+vtskit:
+  keycloak:
+    admin-realm: master # Admin realm
+    admin-client-id: admin-cli # admin client id
+    admin-username: admin # admin username
+    admin-password: admin # admin password
+```
+#### Create New User
+```java
+UserRepresentation user = new UserRepresentation();
+user.setEmail("email@demo.com.vn");
+user.setUsername("email@demo.com.vn");
+CredentialRepresentation password = new CredentialRepresentation();
+password.setType(CredentialRepresentation.PASSWORD);
+password.setValue("password");
+user.setCredentials(Arrays.asList(password));
+keycloakService.createNewUser(user);
+```
+
+#### Update User
+```java
+UserRepresentation user = new UserRepresentation();
+user.setId("b596c1b3-97ff-4ddf-90ec-13ad9a18f289");
+user.setFirstName("Name");
+keycloakService.updateUser(user);
+```
+
+#### Delete User
+```java
+String userId = "b596c1b3-97ff-4ddf-90ec-13ad9a18f289";
+keycloakService.deleteUser(userId);
+```
+
+#### Grant User Token
+```java
+String username = "test";
+String password = "test";
+AccessTokenResponse token  = keycloakService.obtainAccessToken(username, password);
+```
+
+#### Get User By Token
+```java
+String token = "<token>";
+UserRepresentation userRepresentation = keycloakService.getUserByToken(token);
+```
+
+#### Logout Token
+```java
+String token = "<token>";
+keycloakService.logoutToken(token);
+```
+
+#### Logout All Session By User
+```java
+String userId = "b596c1b3-97ff-4ddf-90ec-13ad9a18f289";
+keycloakService.logoutByUserId(userId);
+```
+
+#### Realm Resource Management
 To custom more feature you can create your service and inject some variable, example:
 * Step 1: Inject RealmResource to your class:
-```java
+    ```java
+    private RealmResource realmResource;
+    
     @Autowired
-    private RealmResource keycloakRealmResource;
-```
+    public void setRealmResource(RealmResource realmResource) {
+        this.realmResource = realmResource;
+    }
+    ```
 * Step 2: Use RealResource
-```java
-  public class MyKeycloakService{
-    @Autowired
-    private RealmResource keycloakRealmResource;
-
-    private String getCurrentUserId(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        SimpleKeycloakAccount details = (SimpleKeycloakAccount) authentication.getDetails();
-        return details.getPrincipal().getName();
-    }
-
-    public void changePassword(String password){
-        String userId= getCurrentUserId();
-
-        CredentialRepresentation passwordCred = new CredentialRepresentation();
-        passwordCred.setTemporary(false);
-        passwordCred.setType(CredentialRepresentation.PASSWORD);
-        passwordCred.setValue(password);
-        UsersResource usersResource = keycloakRealmResource.users();
-        UserResource userResource = usersResource.get(userId);
-        userResource.resetPassword(passwordCred);
-    }
-  }
-```
-
-
-
-Build
--------
-* Build with Unittest
-```shell script
-mvn clean install
-```
-
-* Build without Unittest
-```shell script
-mvn clean install -DskipTests
-```
+    ```java
+    String userId= "user-id";
+    CredentialRepresentation passwordCred = new CredentialRepresentation();
+    passwordCred.setTemporary(false);
+    passwordCred.setType(CredentialRepresentation.PASSWORD);
+    passwordCred.setValue(password);
+    UsersResource usersResource = realmResource.users();
+    UserResource userResource = usersResource.get(userId);
+    userResource.resetPassword(passwordCred);
+    ```
 
 Contribute
 -------
-Please refer [Contributors Guide](CONTRIBUTING.md)
+#### Setting up the development environment
+* <b>IDE:</b> Eclipse, Intellij IDEA
+* <b>JDK:</b> >= JDK 8
+* <b>Maven:</b> >= 3.6.0
+* <b>Build:</b>
+```shell script
+mvn clean install
+# Skip Unittest
+mvn clean install -DskipTests
+```
+#### Contribute Guidelines
+If you have any ideas, just open an issue and tell us what you think.
+
+If you'd like to contribute, please refer [Contributors Guide](CONTRIBUTING.md)
 
 License
 -------

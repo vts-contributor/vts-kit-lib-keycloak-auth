@@ -1,27 +1,34 @@
 package com.viettel.vtskit.keycloak.configuration;
 
 import org.keycloak.adapters.springboot.KeycloakSpringBootProperties;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+@Configuration
 public class KeycloakProperties extends KeycloakSpringBootProperties {
 
-
-    @Value("vtskit.keycloak.admin-realm:")
     private String adminRealm;
-    @Value("vtskit.keycloak.admin-clientId:")
     private String adminClientId;
-    @Value("vtskit.keycloak.admin-username:")
+    private String adminClientSecret;
     private String adminUsername;
-    @Value("vtskit.keycloak.admin-password:")
     private String adminPassword;
+    private List<String> ignore;
 
-    @Value("vtskit.keycloak.ignore:")
-    private List ignore;
+    /**
+     * Validate properties at here if necessary
+     */
+    private void validateProperties(){
 
-    public List getIgnore() {
+    }
+
+    @PostConstruct
+    void init(){
+        validateProperties();
+    }
+
+    public List<String> getIgnore() {
         return ignore;
     }
 
@@ -61,16 +68,11 @@ public class KeycloakProperties extends KeycloakSpringBootProperties {
         this.adminPassword = adminPassword;
     }
 
-    /**
-     * Validate properties at here if necessary
-     */
-    private void validateProperties(){
-
+    public String getAdminClientSecret() {
+        return adminClientSecret;
     }
 
-    @PostConstruct
-    void init(){
-        validateProperties();
+    public void setAdminClientSecret(String adminClientSecret) {
+        this.adminClientSecret = adminClientSecret;
     }
-
 }
