@@ -29,8 +29,8 @@ Quick start
 
 * Then, add the following properties to your `application-*.yml` file.
 ```yaml
-vtskit:
-  keycloak:
+
+keycloak:
     realm: keycloak-demo # realm name
     auth-server-url: http://localhost:8080 #url connect to server keycloak
     resource: client-keycloak  #client id
@@ -55,9 +55,10 @@ Usage
 
 By default, all API will be authenticated. To ignore by path pattern, configuration list of `ignore` in your `application-*.yml`:
 ```yaml
-vtskit:
-  keycloak:
-    ignore: ['/auth/**', '/create'] #list of ignored url
+
+keycloak:
+  ignore: ['/auth/**', '/create'] #list of ignored url
+  enabled: false #turn off keycloak spring boot auto-configuration
 ```
 
 Get Current Authentication Information
@@ -65,7 +66,27 @@ Get Current Authentication Information
 ```java
 Authentication authentication = keycloakService.getCurrentAuthentication();
 ```
-
+##### Handle Authentication
+###### Get user login
+```java
+String userName = keycloakService.getUserLogin(Authentication authentication);
+```
+###### Get idUser login
+```java
+String idUser = keycloakService.getUserLoginId(Authentication authentication);
+```
+###### Get string token
+```java
+String token = keycloakService.getStringToken(Authentication authentication);
+```
+###### Get role 
+```java
+Set<String> role = keycloakService.getRoleId(Authentication authentication);
+```
+###### Get client id 
+```java
+String clientId = keycloakService.getClientId(Authentication authentication);
+```
 #### Authorization
 To authorize your API: 
 * <b>Option 1</b>: Define in your `application-*.yml` security constraint:
@@ -87,15 +108,16 @@ To authorize your API:
     }
     ```
 
+
 ### Admin Operation 
 Add the following properties to your `application-*.yml` file.
-```yaml
-vtskit:
-  keycloak:
+```yaml 
+keycloak:
     admin-realm: master # Admin realm
     admin-client-id: admin-cli # admin client id
     admin-username: admin # admin username
     admin-password: admin # admin password
+    enabled: false #turn off keycloak spring boot auto-configuration
 ```
 #### Create New User
 ```java
@@ -107,6 +129,17 @@ password.setType(CredentialRepresentation.PASSWORD);
 password.setValue("password");
 user.setCredentials(Arrays.asList(password));
 keycloakService.createNewUser(user);
+```
+
+#### Get User by username
+```java
+UserRepresentation user = keycloakService.getUserByUsername(String username);
+```
+#### Activate User
+```java
+UserRepresentation user = keycloakService.getUserByUsername(String username);
+user.setEnabled(true);
+keycloakService.updateUser(user);
 ```
 
 #### Update User
@@ -129,6 +162,10 @@ String username = "test";
 String password = "test";
 AccessTokenResponse token  = keycloakService.obtainAccessToken(username, password);
 ```
+#### Refresh User Token
+```java
+AccessTokenResponse token  = keycloakService.refreshToken(refreshToken);
+```
 
 #### Get User By Token
 ```java
@@ -148,6 +185,18 @@ String userId = "b596c1b3-97ff-4ddf-90ec-13ad9a18f289";
 keycloakService.logoutByUserId(userId);
 ```
 
+#### Create Realm Role
+```java
+keycloakService.createRealmRole(String reaRoleName);
+```
+#### Set Role
+```java
+keycloakService.setRole(String userId, String roleName);
+```
+#### Get Role
+```java
+keycloakService.getRoleUser(String userId);
+```
 #### Realm Resource Management
 To custom more feature you can create your service and inject some variable, example:
 * Step 1: Inject RealmResource to your class:
