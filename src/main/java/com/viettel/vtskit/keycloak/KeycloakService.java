@@ -83,7 +83,11 @@ public class KeycloakService {
     //get user by email and username
     public UserRepresentation getUserByUsername(String username){
         validateEnableAdminOperation();
-        return kcRealmResource.users().search(username).get(0);
+        List<UserRepresentation> userRepresentation =  kcRealmResource.users().search(username);
+        if(userRepresentation.size()==0){
+            return null;
+        }
+        return userRepresentation.get(0);
     }
 
     private UserRepresentation getUserByEmail(String email){
@@ -229,6 +233,22 @@ public class KeycloakService {
         }
     }
 
+    public void deleteRole(String userId, String roleName){
+        String userRole = roleName;
+        validateEnableAdminOperation();
+        UserResource userResource=kcRealmResource.users().get(userId);
+        List<RoleRepresentation> roleRepresentationList = userResource.roles().realmLevel().listAvailable();
+
+        for (RoleRepresentation roleRepresentation : roleRepresentationList)
+        {
+            if (roleRepresentation.getName().equals(userRole))
+            {
+                userResource.roles().realmLevel().remove(Arrays.asList(roleRepresentation));
+                break;
+            }
+        }
+    }
+
     /**
      * get Role of User ( role Realm )
      * @param userId
@@ -237,25 +257,18 @@ public class KeycloakService {
         UserResource userResource=kcRealmResource.users().get(userId);
         List<RoleRepresentation> roleRepresentationList = userResource.roles().getAll().getRealmMappings();
         return roleRepresentationList;
-//        for (RoleRepresentation r: roleRepresentationList
-//             ) {
-//            System.out.println(r.getName());
-//        }
     }
+
+
 
     /**
      * get Role of User ( role client )
      * @param userId
      */
-    public void getRoleClientUser(String userId){
+    public List<RoleRepresentation> getRoleClientUser(String userId){
         UserResource userResource=kcRealmResource.users().get(userId);
-//        List<RoleRepresentation> roleRepresentationList = userResource.roles().getAll().getRealmMappings();
-        Map<String, ClientMappingsRepresentation> roleRepresentationList = userResource.roles().getAll().getClientMappings();
-        for (String name: roleRepresentationList.keySet()) {
-            String key = name.toString();
-            String value = roleRepresentationList.get(name).getMappings().toString();
-            System.out.println(key + " " + value);
-        }
+        List<RoleRepresentation> roleRepresentationList = userResource.roles().getAll().getRealmMappings();
+        return roleRepresentationList;
     }
     /**
      * deleteUser
@@ -277,7 +290,7 @@ public class KeycloakService {
             String userName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername().toUpperCase();
             return userName;
         } catch (Exception e) {
-            LOGGER.error("Loi! getUserLogin: ", e);
+            LOGGER.error("ERROR! getUserLogin: ", e);
             return null;
         }
     }
@@ -294,7 +307,7 @@ public class KeycloakService {
             String userId = principal.getKeycloakSecurityContext().getToken().getId();
             return userId;
         } catch (Exception e) {
-            LOGGER.error("Loi! getUserLoginId: ", e);
+            LOGGER.error("ERORR! getUserLoginId: ", e);
             return null;
         }
     }
@@ -311,7 +324,7 @@ public class KeycloakService {
             String strToken = principal.getKeycloakSecurityContext().getTokenString();
             return strToken;
         } catch (Exception e) {
-            LOGGER.error("Loi! getUserLogin: ", e);
+            LOGGER.error("ERROR! getUserLogin: ", e);
             return null;
         }
     }
@@ -328,7 +341,7 @@ public class KeycloakService {
             Set<String> roleId = principal.getKeycloakSecurityContext().getToken().getResourceAccess().get(getClientId(authentication)).getRoles();
             return roleId;
         } catch (Exception e) {
-            LOGGER.error("Loi! getUserLogin: ", e);
+            LOGGER.error("ERROR! getUserLogin: ", e);
             return new HashSet<>();
         }
     }
@@ -342,7 +355,7 @@ public class KeycloakService {
             String clientId = principal.getKeycloakSecurityContext().getToken().getIssuedFor();
             return clientId;
         } catch (Exception e) {
-            LOGGER.error("Loi! getUserLogin: ", e);
+            LOGGER.error("ERORR! getUserLogin: ", e);
             return null;
         }
     }
