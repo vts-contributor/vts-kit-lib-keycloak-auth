@@ -6,7 +6,7 @@
 
     <groupId>com.atviettelsolutions</groupId>
     <artifactId>vts-kit-ms-keycloak-auth</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 
     <properties>
         <spring-boot.version>2.6.6</spring-boot.version>
