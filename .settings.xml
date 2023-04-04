@@ -11,11 +11,5 @@
       <password>${env.NEXUS_PASS}</password>
     </server>
   </servers>
-  <mirrors>
-    <mirror>
-      <id>central-secure</id>
-      <url>https://repo.maven.apache.org/maven2/</url>
-      <mirrorOf>central</mirrorOf>
-    </mirror>
-  </mirrors>
+
 </settings>
