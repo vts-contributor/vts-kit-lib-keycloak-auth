@@ -22,7 +22,7 @@ Quick start
 ```xml
 <dependency>
     <groupId>com.atviettelsolutions</groupId>
-    <artifactId>vts-kit-ms-keycloak-auth</artifactId>
+    <artifactId>vts-kit-lib-keycloak-auth</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
